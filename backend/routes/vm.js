@@ -18,6 +18,7 @@ router.post('/create',
   body('ram').isInt({ min: 1, max: 512 }).withMessage('RAM must be 1-512 GB'),
   body('disk').isInt({ min: 1, max: 10000 }).withMessage('Disk must be 1-10000 GB'),
   body('templateId').isInt({ min: 100 }).withMessage('Valid templateId required'),
+  body('instances').optional().isInt({ min: 1, max: 100 }).withMessage('Instances must be 1-100'),
   validate,
   ctrl.createVM
 );

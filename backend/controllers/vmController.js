@@ -23,10 +23,12 @@ async function getVM(req, res, next) {
 
 async function createVM(req, res, next) {
   try {
-    const { name, cpu, ram, disk, templateId } = req.body;
-    const result = await proxmox.createVM({ name, cpu, ram, disk, templateId });
-    usage.recordAction({ userId: req.user.id, vmid: result.vmid, action: 'create', meta: { name, cpu, ram, disk } });
-    res.status(201).json(result);
+    const { name, cpu, ram, disk, templateId, instances } = req.body;
+    const results = await proxmox.createVM({ name, cpu, ram, disk, templateId, instances });
+    results.forEach(vm => {
+      usage.recordAction({ userId: req.user.id, vmid: vm.vmid, action: 'create', meta: { name: vm.name, cpu, ram, disk } });
+    });
+    res.status(201).json(results.length === 1 ? results[0] : results);
   } catch (err) {
     next(err);
   }

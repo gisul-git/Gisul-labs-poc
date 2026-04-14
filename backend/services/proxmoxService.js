@@ -160,43 +160,51 @@ async function getVM(vmid) {
   return { ...vm, config, status: status.status, pid: status.pid };
 }
 
-async function createVM({ name, cpu, ram, disk, templateId }) {
+async function createVM({ name, cpu, ram, disk, templateId, instances = 1 }) {
   const vms = await listVMs();
   const template = vms.find(v => v.vmid == templateId && v.template);
   if (!template) throw Object.assign(new Error('Template not found'), { status: 404 });
 
-  const newVmid = await proxmoxRequest('GET', '/cluster/nextid');
   const endpoint = template.type === 'lxc' ? 'lxc' : 'qemu';
+  const count = Math.min(parseInt(instances) || 1, 100);
 
-  const upid = await proxmoxRequest('POST', `/nodes/${template.node}/${endpoint}/${templateId}/clone`, {
-    newid: parseInt(newVmid),
-    name,
-    full: 0,
-    target: template.node,
-  });
+  // Create all instances — get VMIDs sequentially (Proxmox nextid must be called one at a time)
+  const results = [];
+  for (let i = 0; i < count; i++) {
+    const newVmid = await proxmoxRequest('GET', '/cluster/nextid');
+    const vmName = count > 1 ? `${name}-${i + 1}` : name;
 
-  setProvisioning(parseInt(newVmid), template.node, upid);
+    const upid = await proxmoxRequest('POST', `/nodes/${template.node}/${endpoint}/${templateId}/clone`, {
+      newid: parseInt(newVmid),
+      name: vmName,
+      full: 0,
+      target: template.node,
+    });
 
-  // Apply CPU/RAM config after clone settles
-  setTimeout(async () => {
-    try {
-      if (endpoint === 'qemu') {
-        await proxmoxRequest('PUT', `/nodes/${template.node}/qemu/${newVmid}/config`, {
-          cores: parseInt(cpu),
-          memory: parseInt(ram) * 1024,
-        });
-      } else {
-        await proxmoxRequest('PUT', `/nodes/${template.node}/lxc/${newVmid}/config`, {
-          cores: parseInt(cpu),
-          memory: parseInt(ram) * 1024,
-        });
+    setProvisioning(parseInt(newVmid), template.node, upid);
+
+    setTimeout(async () => {
+      try {
+        if (endpoint === 'qemu') {
+          await proxmoxRequest('PUT', `/nodes/${template.node}/qemu/${newVmid}/config`, {
+            cores: parseInt(cpu),
+            memory: parseInt(ram) * 1024,
+          });
+        } else {
+          await proxmoxRequest('PUT', `/nodes/${template.node}/lxc/${newVmid}/config`, {
+            cores: parseInt(cpu),
+            memory: parseInt(ram) * 1024,
+          });
+        }
+      } catch (e) {
+        console.error('[Config after clone error]', e.message);
       }
-    } catch (e) {
-      console.error('[Config after clone error]', e.message);
-    }
-  }, 30000);
+    }, 30000);
 
-  return { vmid: parseInt(newVmid), name, node: template.node, type: template.type, status: 'creating' };
+    results.push({ vmid: parseInt(newVmid), name: vmName, node: template.node, type: template.type, status: 'creating' });
+  }
+
+  return results;
 }
 
 async function startVM(vmid) {

@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { vmService } from '../../../lib/vmService';
 import { ToastContainer, toast } from '../../../components/Toast';
 
-const DEFAULTS = { name: '', cpu: 2, ram: 2, disk: 20, templateId: '' };
+const DEFAULTS = { name: '', cpu: 2, ram: 2, disk: 20, templateId: '', instances: 1 };
 
 export default function CreateVMPage() {
   const router = useRouter();
@@ -32,7 +32,7 @@ export default function CreateVMPage() {
     if (!form.templateId) e.templateId = 'Select a template';
     if (form.cpu < 1 || form.cpu > 64) e.cpu = '1–64 cores';
     if (form.ram < 1 || form.ram > 512) e.ram = '1–512 GB';
-    if (form.disk < 1 || form.disk > 10000) e.disk = '1–10000 GB';
+    if (form.instances < 1 || form.instances > 100) e.instances = '1–100 instances';
     return e;
   }
 
@@ -48,8 +48,13 @@ export default function CreateVMPage() {
         ram: parseInt(form.ram),
         disk: parseInt(form.disk),
         templateId: parseInt(form.templateId),
+        instances: parseInt(form.instances),
       });
-      toast(`VM "${res.data.name}" created (VMID: ${res.data.vmid})`, 'success');
+      const count = parseInt(form.instances);
+      const msg = count > 1
+        ? `${count} VMs created successfully`
+        : `VM "${res.data.name}" created (VMID: ${res.data.vmid})`;
+      toast(msg, 'success');
       setTimeout(() => router.push('/'), 1500);
     } catch (err) {
       toast(err.response?.data?.error || 'Failed to create VM', 'error');
@@ -101,10 +106,21 @@ export default function CreateVMPage() {
             {errors.disk && <p className="text-red-400 text-xs mt-1">{errors.disk}</p>}
           </div>
         </div>
+        <div>
+          <label className="label">Number of Instances</label>
+          <input className="input" type="number" min={1} max={100} value={form.instances} onChange={e => set('instances', e.target.value)} />
+          {errors.instances && <p className="text-red-400 text-xs mt-1">{errors.instances}</p>}
+          {form.instances > 1 && (
+            <p className="text-xs text-gray-500 mt-1">
+              Will create: {form.name ? `${form.name}-1` : 'name-1'} ... {form.name ? `${form.name}-${form.instances}` : `name-${form.instances}`}
+            </p>
+          )}
+        </div>
         {selectedTemplate && (
           <div className="bg-gray-800 rounded-lg px-4 py-3 text-xs text-gray-400 space-y-1">
             <p>Template: <span className="text-gray-200">{selectedTemplate.name}</span></p>
             <p>Resources: <span className="text-gray-200">{form.cpu} vCPU · {form.ram} GB RAM · {form.disk} GB Disk</span></p>
+            <p>Instances: <span className="text-gray-200">{form.instances}</span></p>
           </div>
         )}
         <div className="flex gap-3 pt-1">
