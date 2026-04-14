@@ -1,0 +1,22 @@
+services:
+  vm-backend:
+    image: gisul/vm-manager-backend:latest
+    container_name: vm-manager-backend
+    restart: unless-stopped
+    # host network so backend can reach localhost:9000 (SSH tunnel to Proxmox)
+    network_mode: host
+    env_file:
+      - .env
+
+  vm-frontend:
+    image: gisul/vm-manager-frontend:latest
+    container_name: vm-manager-frontend
+    restart: unless-stopped
+    ports:
+      - "4002:3000"
+    networks:
+      - vm-net
+      
+networks:
+  vm-net:
+    driver: bridge

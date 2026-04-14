@@ -1,0 +1,66 @@
+name: Build Push and Deploy
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  build-push-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Backend
+        run: |
+          docker build -t gisul/vm-manager-backend:latest \
+            -t gisul/vm-manager-backend:${{ github.sha }} \
+            ./backend
+          docker push gisul/vm-manager-backend:latest
+          docker push gisul/vm-manager-backend:${{ github.sha }}
+
+      - name: Build and Push Frontend
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
+            -t gisul/vm-manager-frontend:latest \
+            -t gisul/vm-manager-frontend:${{ github.sha }} \
+            ./frontend
+          docker push gisul/vm-manager-frontend:latest
+          docker push gisul/vm-manager-frontend:${{ github.sha }}
+
+      - name: Deploy to VM
+        if: github.event_name == 'push'
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_USER: ${{ secrets.VM_USER }}
+          VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$VM_SSH_KEY" > ~/.ssh/key
+          chmod 600 ~/.ssh/key
+          ssh-keyscan -H $VM_HOST >> ~/.ssh/known_hosts
+          ssh -i ~/.ssh/key $VM_USER@$VM_HOST << 'EOF'
+            cd /opt/vm-manager
+            echo "Pulling latest images..."
+            docker compose pull
+            echo "Restarting services..."
+            docker compose up -d
+            echo "Waiting for health checks..."
+            sleep 20
+            docker compose ps
+            echo "Cleaning unused images..."
+            docker image prune -f
+            echo "Deployment complete"
+          EOF
