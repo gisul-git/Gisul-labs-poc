@@ -3,10 +3,14 @@ services:
     image: gisul/vm-manager-backend:latest
     container_name: vm-manager-backend
     restart: unless-stopped
-    # host network so backend can reach localhost:9000 (SSH tunnel to Proxmoxx)
-    network_mode: host
+    ports:
+      - "5001:5000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # allows reaching localhost:9000 SSH tunnel
     env_file:
       - .env
+    networks:
+      - vm-net
 
   vm-frontend:
     image: gisul/vm-manager-frontend:latest
@@ -14,6 +18,8 @@ services:
     restart: unless-stopped
     ports:
       - "4002:3000"
+    depends_on:
+      - vm-backend
     networks:
       - vm-net
 
