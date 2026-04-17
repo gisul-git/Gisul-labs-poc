@@ -5,6 +5,7 @@
  */
 const axios = require('axios');
 const https = require('https');
+const usage = require('./usageService');
 
 const BASE_URL = process.env.PROXMOX_HOST;
 const NODE = process.env.PROXMOX_NODE || 'pve';
@@ -145,6 +146,7 @@ async function listVMs() {
     ip: vm.ip || null,
     template: vm.template === 1,
     provisioningStatus: getProvisioningStatus(vm.vmid),
+    uptimeSeconds: usage.getVMUptime(vm.vmid),
   }));
 }
 

@@ -23,6 +23,15 @@ function formatBytes(bytes) {
   return gb >= 1 ? `${gb.toFixed(1)} GB` : `${(bytes / 1024 ** 2).toFixed(0)} MB`;
 }
 
+function formatUptime(seconds) {
+  if (!seconds || seconds <= 0) return null;
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m`;
+  return `${seconds}s`;
+}
+
 export default function VMCard({ vm, onStart, onStop, onRestart, onDelete, loading }) {
   const router = useRouter();
   const isRunning = vm.status === 'running';
@@ -60,6 +69,9 @@ export default function VMCard({ vm, onStart, onStop, onRestart, onDelete, loadi
           <div className="flex justify-between mt-1"><span>RAM</span><span>{formatBytes(vm.mem)} / {formatBytes(vm.maxmem)}</span></div>
           <StatBar value={vm.mem} max={vm.maxmem} color="bg-purple-500" />
           {vm.ip && <p className="text-gray-500 pt-1">IP: <span className="text-gray-300">{vm.ip}</span></p>}
+          {formatUptime(vm.uptimeSeconds) && (
+            <p className="text-gray-500 pt-1">Total Usage: <span className="text-yellow-400">{formatUptime(vm.uptimeSeconds)}</span></p>
+          )}
         </div>
       )}
 
