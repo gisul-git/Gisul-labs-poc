@@ -1,4 +1,4 @@
-/** @type {import('next').NextConfig} */
+/** @type {import('next').NextConfigs} */
 const nextConfig = {
   async rewrites() {
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
