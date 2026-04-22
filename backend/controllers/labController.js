@@ -49,6 +49,12 @@ async function startLab(req, res, next) {
     const lab = await Lab.findById(labId);
     if (!lab) return res.status(404).json({ error: 'Lab not found' });
 
+    // Close any existing active sessions for this user before starting new one
+    await LabSession.updateMany(
+      { userId: req.user.id, status: 'active' },
+      { status: 'completed' }
+    );
+
     // Clone VM from the lab's template (1 instance), auto-start after clone
     const results = await proxmox.createVM({
       name: `lab-${lab.title.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
