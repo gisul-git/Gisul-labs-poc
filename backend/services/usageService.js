@@ -4,7 +4,7 @@
  * In production, replace the in-memory store with a database (PostgreSQL/MongoDB).
  */
 
-// In-memory store — replace with DB in production
+// In-memory store — replace with DB in productions
 const usageLog = [];
 const vmUsageMap = {}; // vmid -> { totalUptime, lastStarted }
 
