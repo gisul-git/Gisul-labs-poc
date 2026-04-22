@@ -1,0 +1,23 @@
+[Unit]
+Description=WinRM Proxy Agent for Lab VMs
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/winrm-proxy
+ExecStart=/usr/bin/python3 /opt/winrm-proxy/winrm_proxy.py
+Restart=always
+RestartSec=5
+
+Environment=PROXY_PORT=8007
+Environment=PROXY_SECRET=changeme-use-a-strong-secret
+Environment=WINRM_USERNAME=Administrator
+Environment=WINRM_PASSWORD=YourWindowsPassword
+Environment=WINRM_PORT=5985
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

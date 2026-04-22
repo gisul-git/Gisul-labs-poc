@@ -5,11 +5,16 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 
+const connectDB = require('./db');
 const authRoutes = require('./routes/auth');
 const vmRoutes = require('./routes/vm');
 const createConsoleRouter = require('./routes/console');
 const usageRoutes = require('./routes/usage');
+const labRoutes = require('./routes/lab');
 const { authenticate } = require('./middlewares/auth');
+
+// Connect to MongoDB Atlas
+connectDB();
 
 const app = express();
 expressWs(app); // must be called before routes that use .ws()
@@ -48,6 +53,7 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/vm', authenticate, vmRoutes);
 app.use('/api/console', authenticate, createConsoleRouter(app));
 app.use('/api/usage', authenticate, usageRoutes);
+app.use('/api/labs', authenticate, labRoutes);
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));

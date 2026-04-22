@@ -92,17 +92,17 @@ async function proxmoxRequest(method, path, data = null, params = null) {
 // Tracks VMs currently being cloned: vmid -> { status: 'creating'|'ready', upid, node }
 const provisioningMap = {};
 
-function setProvisioning(vmid, node, upid) {
-  provisioningMap[vmid] = { status: 'creating', node, upid };
+function setProvisioning(vmid, node, upid, type = 'qemu', autoStart = false) {
+  provisioningMap[vmid] = { status: 'creating', node, upid, type };
   // Poll in background until done
-  pollUntilReady(vmid, node, upid);
+  pollUntilReady(vmid, node, upid, autoStart);
 }
 
 function getProvisioningStatus(vmid) {
   return provisioningMap[vmid]?.status || 'ready';
 }
 
-async function pollUntilReady(vmid, node, upid) {
+async function pollUntilReady(vmid, node, upid, autoStart = false) {
   const encodedUpid = encodeURIComponent(upid);
   const maxWait = 30 * 60 * 1000; // 30 minutes max
   const start = Date.now();
@@ -114,6 +114,18 @@ async function pollUntilReady(vmid, node, upid) {
       if (result.status === 'stopped') {
         provisioningMap[vmid] = { status: 'ready', node, upid };
         console.log(`[Provisioning] VM ${vmid} clone complete`);
+
+        // Auto-start if requested (e.g. lab flow)
+        if (autoStart) {
+          try {
+            console.log(`[Provisioning] Auto-starting VM ${vmid}`);
+            const endpoint = provisioningMap[vmid]?.type === 'lxc' ? 'lxc' : 'qemu';
+            await proxmoxRequest('POST', `/nodes/${node}/${endpoint}/${vmid}/status/start`);
+            console.log(`[Provisioning] VM ${vmid} start issued`);
+          } catch (e) {
+            console.error(`[Provisioning] Auto-start failed for VM ${vmid}:`, e.message);
+          }
+        }
         return;
       }
     } catch (e) {
@@ -162,7 +174,7 @@ async function getVM(vmid) {
   return { ...vm, config, status: status.status, pid: status.pid };
 }
 
-async function createVM({ name, cpu, ram, disk, templateId, instances = 1 }) {
+async function createVM({ name, cpu, ram, disk, templateId, instances = 1, autoStart = false }) {
   const vms = await listVMs();
   const template = vms.find(v => v.vmid == templateId && v.template);
   if (!template) throw Object.assign(new Error('Template not found'), { status: 404 });
@@ -183,7 +195,7 @@ async function createVM({ name, cpu, ram, disk, templateId, instances = 1 }) {
       target: template.node,
     });
 
-    setProvisioning(parseInt(newVmid), template.node, upid);
+    setProvisioning(parseInt(newVmid), template.node, upid, template.type, autoStart);
 
     setTimeout(async () => {
       try {
@@ -320,6 +332,27 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// ─── Guest Agent IP ───────────────────────────────────────────────────────────
+
+async function getVMIP(vmid) {
+  const vm = await getVMLocation(vmid);
+  const endpoint = vm.type === 'lxc' ? 'lxc' : 'qemu';
+  try {
+    const result = await proxmoxRequest('GET', `/nodes/${vm.node}/${endpoint}/${vmid}/agent/network-get-interfaces`);
+    const ifaces = result?.result || [];
+    for (const iface of ifaces) {
+      for (const addr of (iface['ip-addresses'] || [])) {
+        if (addr['ip-address-type'] === 'ipv4' && !addr['ip-address'].startsWith('127.')) {
+          return addr['ip-address'];
+        }
+      }
+    }
+  } catch (e) {
+    console.error(`[getVMIP] Guest agent error for VM ${vmid}:`, e.message);
+  }
+  return null;
+}
+
 // ─── Usage / Stats ─────────────────────────────────────────────────────────────
 
 async function getNodeStats() {
@@ -348,6 +381,7 @@ module.exports = {
   getTemplates,
   createVNCTicket,
   getNodeStats,
+  getVMIP,
   proxmoxRequest,
   getVMLocation,
   ensureAuth,
