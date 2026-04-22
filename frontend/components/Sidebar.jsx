@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 const navItems = [
   { href: '/',       label: 'Dashboard', icon: '⊞' },
   { href: '/create', label: 'Create VM',  icon: '+' },
+  { href: '/labs',   label: 'Labs',       icon: '🧪' },
 ];
 
 export default function Sidebar() {
