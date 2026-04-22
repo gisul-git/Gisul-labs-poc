@@ -14,7 +14,7 @@ const lab = {
       title: 'Install MongoDB',
       type: 'action',
       scriptType: 'powershell',
-      command: `Invoke-WebRequest -Uri "https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-6.0.6-signed.msi" -OutFile "C:\\mongo.msi"; Start-Process "msiexec.exe" -ArgumentList "/i C:\\mongo.msi /quiet" -Wait;`,
+      command: `Invoke-WebRequest -Uri "https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-6.0.6-signed.msi" -OutFile "C:\\mongo.msi"; Start-Process "msiexec.exe" -ArgumentList "/i C:\\mongo.msi /quiet ADDLOCAL=ServerService,Client,Router,MiscellaneousFiles,Server SHOULD_INSTALL_COMPASS=0" -Wait; Start-Sleep -Seconds 5; Start-Service -Name MongoDB -ErrorAction SilentlyContinue;`,
       instructions: `This step downloads and silently installs MongoDB 6.0 on your Windows VM.\n\nWhat happens:\n- The MSI installer is downloaded to C:\\mongo.msi\n- It installs silently (no UI) via msiexec\n- The MongoDB service is registered automatically\n\nAfter completion, you can verify the install:\n- Open Services (services.msc) and look for "MongoDB"\n- Or open PowerShell and run: Get-Service MongoDB\n- Data directory will be at: C:\\Program Files\\MongoDB\\Server\\6.0\\data`,
     },
     {
