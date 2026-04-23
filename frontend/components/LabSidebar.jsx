@@ -82,7 +82,7 @@ export default function LabSidebar({ vmId }) {
   const labComplete = session?.status === 'completed' || completedCount === totalCount;
 
   return (
-    <div className="w-80 bg-gray-900 border-l border-gray-800 flex flex-col overflow-hidden">
+    <div className="w-80 bg-gray-900 border-l border-gray-800 flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-800">
         <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Lab Instructions</p>
@@ -126,11 +126,11 @@ export default function LabSidebar({ vmId }) {
               }`}
             >
               {/* Step header row */}
-              <div className="flex items-center gap-2 px-3 py-2.5">
+              <div className="flex items-center gap-2 px-3 py-2.5 cursor-pointer" onClick={() => setExpanded(isExpanded ? null : step.stepId)}>
                 {/* Checkbox for manual, status icon for action */}
                 {isManual ? (
                   <button
-                    onClick={() => handleManualCheck(step)}
+                    onClick={e => { e.stopPropagation(); handleManualCheck(step); }}
                     disabled={isDone}
                     className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${
                       isDone
@@ -150,19 +150,16 @@ export default function LabSidebar({ vmId }) {
                 )}
 
                 {/* Title */}
-                <button
-                  className="flex-1 text-left min-w-0"
-                  onClick={() => setExpanded(isExpanded ? null : step.stepId)}
-                >
+                <div className="flex-1 min-w-0">
                   <p className={`text-xs font-medium truncate ${isDone ? 'text-green-300' : 'text-gray-200'}`}>
                     {idx + 1}. {step.title}
                   </p>
                   <p className="text-xs text-gray-600 mt-0.5">
                     {isManual ? 'Manual' : 'Automated'} · {isDone ? 'Done' : isRunning ? 'Running...' : 'Pending'}
                   </p>
-                </button>
+                </div>
 
-                <span className="text-xs text-gray-600">{isExpanded ? '▲' : '▼'}</span>
+                <span className="text-xs text-gray-400">{isExpanded ? '▲' : '▼'}</span>
               </div>
 
               {/* Expanded content */}
