@@ -5,7 +5,7 @@ const StepSchema = new mongoose.Schema({
   title:      { type: String, required: true },
   type:       { type: String, default: 'action' },
   scriptType: { type: String, default: 'powershell' },
-  command:    { type: String, required: true },
+  command:    { type: String, default: '' },
   // Human-readable instructions shown in the sidebar
   instructions: { type: String, default: '' },
 }, { _id: false });
