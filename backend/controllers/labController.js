@@ -112,6 +112,18 @@ async function executeStep(req, res, next) {
       return res.json({ status: 'already_completed', message: 'Step was already completed' });
     }
 
+    // Manual steps — just mark complete, no WinRM execution
+    if (step.type === 'manual') {
+      await LabSession.updateOne(
+        { _id: session._id },
+        { $addToSet: { completedSteps: stepId } }
+      );
+      const updatedSession = await LabSession.findById(session._id);
+      const allDone = lab.steps.every(s => updatedSession.completedSteps.includes(s.stepId));
+      if (allDone) await LabSession.updateOne({ _id: session._id }, { status: 'completed' });
+      return res.json({ status: 'success', stepId, output: 'Manual step marked complete', labCompleted: allDone });
+    }
+
     // Get VM IP via QEMU Guest Agent
     const ip = await proxmox.getVMIP(vmId);
     if (!ip) return res.status(400).json({ error: 'VM IP not available yet. Ensure QEMU Guest Agent is running.' });
