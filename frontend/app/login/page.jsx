@@ -49,9 +49,9 @@ export default function LoginPage() {
         <div className="relative z-10 flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm"
             style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}>
-            GL
+            VML
           </div>
-          <span className="text-white font-semibold text-lg tracking-tight">Gisul Labs</span>
+          <span className="text-white font-semibold text-lg tracking-tight">VM Labs</span>
         </div>
 
         {/* Hero text */}
@@ -74,9 +74,9 @@ export default function LoginPage() {
               { icon: '🧪', title: 'Guided Lab Steps', desc: 'Automated PowerShell execution with progress tracking' },
             ].map(f => (
               <div key={f.title} className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-sm flex-shrink-0">
+                {/* <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-sm flex-shrink-0">
                   {f.icon}
-                </div>
+                </div> */}
                 <div>
                   <p className="text-white text-sm font-medium">{f.title}</p>
                   <p className="text-gray-500 text-xs mt-0.5">{f.desc}</p>
@@ -120,7 +120,7 @@ export default function LoginPage() {
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1.5">Username</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">👤</span>
+                {/* <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">👤</span> */}
                 <input
                   className="w-full bg-gray-900 border border-gray-700 rounded-lg pl-9 pr-4 py-2.5 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:ring-2 focus:border-transparent transition-all"
                   style={{ '--tw-ring-color': '#6366f1' }}
@@ -138,7 +138,7 @@ export default function LoginPage() {
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1.5">Password</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">🔒</span>
+                {/* <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">🔒</span> */}
                 <input
                   className="w-full bg-gray-900 border border-gray-700 rounded-lg pl-9 pr-10 py-2.5 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:ring-2 focus:border-transparent transition-all"
                   style={{ '--tw-ring-color': '#6366f1' }}
