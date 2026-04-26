@@ -69,9 +69,21 @@ export default function VMCard({ vm, onStart, onStop, onRestart, onDelete, loadi
           <div className="flex justify-between mt-1"><span>RAM</span><span>{formatBytes(vm.mem)} / {formatBytes(vm.maxmem)}</span></div>
           <StatBar value={vm.mem} max={vm.maxmem} color="bg-purple-500" />
           {vm.ip && <p className="text-gray-500 pt-1">IP: <span className="text-gray-300">{vm.ip}</span></p>}
-          {formatUptime(vm.uptimeSeconds) && (
-            <p className="text-gray-500 pt-1">Total Usage: <span className="text-yellow-400">{formatUptime(vm.uptimeSeconds)}</span></p>
-          )}
+          {/* Uptime stats */}
+          <div className="pt-2 mt-1 border-t border-gray-800 grid grid-cols-2 gap-2">
+            <div className="bg-gray-900 rounded-lg px-2 py-1.5">
+              <p className="text-gray-600 text-xs mb-0.5">Today</p>
+              <p className="text-yellow-400 text-xs font-medium">
+                {formatUptime(vm.uptimeToday) || '—'}
+              </p>
+            </div>
+            <div className="bg-gray-900 rounded-lg px-2 py-1.5">
+              <p className="text-gray-600 text-xs mb-0.5">This week</p>
+              <p className="text-blue-400 text-xs font-medium">
+                {formatUptime(vm.uptimeWeek) || '—'}
+              </p>
+            </div>
+          </div>
         </div>
       )}
 

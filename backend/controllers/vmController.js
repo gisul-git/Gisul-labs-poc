@@ -1,11 +1,27 @@
 const proxmox = require('../services/proxmoxService');
 const usage = require('../services/usageService');
+const { trackVMs, getUptimeStats } = require('../services/uptimeTracker');
 
 async function listVMs(req, res, next) {
   try {
     const vms = await proxmox.listVMs();
     const summary = usage.getSummary(vms);
-    res.json({ vms, summary });
+
+    // Track uptime in background (don't await — non-blocking)
+    trackVMs(vms).catch(e => console.error('[UptimeTracker]', e.message));
+
+    // Fetch today/week stats for all VMs
+    const vmids = vms.map(v => v.vmid);
+    const uptimeStats = await getUptimeStats(vmids);
+
+    // Attach stats to each VM
+    const vmsWithStats = vms.map(vm => ({
+      ...vm,
+      uptimeToday: uptimeStats[vm.vmid]?.today || 0,
+      uptimeWeek:  uptimeStats[vm.vmid]?.week  || 0,
+    }));
+
+    res.json({ vms: vmsWithStats, summary });
   } catch (err) {
     next(err);
   }
