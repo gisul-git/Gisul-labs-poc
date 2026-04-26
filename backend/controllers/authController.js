@@ -11,7 +11,7 @@ const USERS = [
   },
 ];
 
-// Hash the admin password at startup
+// Hashs the admin password at startup
 (async () => {
   const plain = process.env.ADMIN_PASSWORD || 'admin123';
   USERS[0].passwordHash = await bcrypt.hash(plain, 12);
